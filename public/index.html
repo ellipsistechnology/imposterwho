@@ -158,10 +158,17 @@
 
       .section-heading {
         display: flex;
+        flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
         gap: 16px;
         margin-bottom: 24px;
+      }
+
+      .section-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
       }
 
       h2 {
@@ -183,6 +190,21 @@
         font-weight: 700;
         cursor: pointer;
       }
+
+      .complete-button {
+        min-height: 38px;
+        padding: 0 12px;
+        color: #a53927;
+        background: #fff;
+        border: 1px solid #e8c8c0;
+        border-radius: 5px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .complete-button:disabled { opacity: 0.45; cursor: not-allowed; }
 
       form { display: grid; gap: 18px; }
 
@@ -225,6 +247,12 @@
       }
 
       .content-pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .generation-options {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 14px;
@@ -312,6 +340,7 @@
         h1 { font-size: 36px; }
         .join-section { padding: 20px 16px; }
         .content-pair { grid-template-columns: 1fr; }
+        .generation-options { grid-template-columns: 1fr; }
       }
     </style>
   </head>
@@ -337,7 +366,10 @@
         <section id="join-panel" class="join-section" role="tabpanel" aria-labelledby="join-tab">
           <div class="section-heading">
             <h2 id="join-title">Join a game</h2>
-            <button id="refresh-button" class="refresh-button" type="button">Refresh games</button>
+            <div class="section-actions">
+              <button id="refresh-button" class="refresh-button" type="button">Refresh games</button>
+              <button id="complete-button" class="complete-button" type="button" disabled>Complete game</button>
+            </div>
           </div>
 
           <form id="join-form">
@@ -371,6 +403,19 @@
             <label for="player-names">Player names
               <textarea id="player-names" required placeholder="Alex&#10;Sam&#10;Riley"></textarea>
             </label>
+            <div class="generation-options">
+              <label for="topic-input">Topic (optional)
+                <input id="topic-input" class="text-input" type="text" maxlength="80" autocomplete="off" placeholder="e.g. Nature">
+              </label>
+              <label for="difficulty-select">Difficulty (optional)
+                <select id="difficulty-select">
+                  <option value="">Any</option>
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </label>
+            </div>
             <div class="content-pair">
               <label for="word-input">Word (optional)
                 <input id="word-input" class="text-input" type="text" autocomplete="off">
@@ -394,6 +439,7 @@
       const gameSelect = document.querySelector('#game-select');
       const playerSelect = document.querySelector('#player-select');
       const joinButton = document.querySelector('#join-button');
+      const completeButton = document.querySelector('#complete-button');
       const notice = document.querySelector('#notice');
       const profile = document.querySelector('#profile');
       const createNotice = document.querySelector('#create-notice');
@@ -410,6 +456,7 @@
         if (!game) {
           playerSelect.disabled = true;
           joinButton.disabled = true;
+          completeButton.disabled = true;
           return;
         }
 
@@ -418,6 +465,7 @@
         }
         playerSelect.disabled = false;
         joinButton.disabled = true;
+        completeButton.disabled = false;
         profile.hidden = true;
       }
 
@@ -470,6 +518,27 @@
         profile.hidden = true;
       });
       document.querySelector('#refresh-button').addEventListener('click', () => loadGames());
+      completeButton.addEventListener('click', async () => {
+        const gameId = gameSelect.value;
+        const game = gamesById.get(gameId);
+        if (!gameId || !game) return;
+        if (!window.confirm(`Complete and remove the game with ${game.players.length} players? Players will no longer be able to join.`)) return;
+
+        completeButton.disabled = true;
+        try {
+          const response = await fetch(`/api/imposterwho/games/${encodeURIComponent(gameId)}`, { method: 'DELETE' });
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Could not complete the game.');
+          }
+          profile.hidden = true;
+          await loadGames();
+          setNotice('Game completed and removed.');
+        } catch (error) {
+          setNotice(error.message, true);
+          completeButton.disabled = !gameSelect.value;
+        }
+      });
       document.querySelector('#join-tab').addEventListener('click', () => setMode('join'));
       document.querySelector('#new-tab').addEventListener('click', () => setMode('new'));
       document.querySelector('#join-form').addEventListener('submit', async (event) => {
@@ -498,6 +567,8 @@
       document.querySelector('#new-form').addEventListener('submit', async (event) => {
         event.preventDefault();
         const players = document.querySelector('#player-names').value.split(/\r?\n/).map(name => name.trim()).filter(Boolean);
+        const topic = document.querySelector('#topic-input').value.trim();
+        const difficulty = document.querySelector('#difficulty-select').value;
         const word = document.querySelector('#word-input').value.trim();
         const clue = document.querySelector('#clue-input').value.trim();
         const normalizedNames = new Set(players.map(name => name.toLowerCase()));
@@ -522,7 +593,12 @@
           const response = await fetch('/api/imposterwho/new', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ players, ...(word ? { word, clue } : {}) }),
+            body: JSON.stringify({
+              players,
+              ...(topic ? { topic } : {}),
+              ...(difficulty ? { difficulty } : {}),
+              ...(word ? { word, clue } : {}),
+            }),
           });
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || 'Could not create the game.');

@@ -43,7 +43,7 @@ app.get('/api/items', (_request, response) => {
 });
 
 app.post('/api/imposterwho/new', async (request, response) => {
-  const { players: playerNames, word, clue } = request.body ?? {};
+  const { players: playerNames, word, clue, topic, difficulty } = request.body ?? {};
 
   if (
     !Array.isArray(playerNames) ||
@@ -60,6 +60,24 @@ app.post('/api/imposterwho/new', async (request, response) => {
     return;
   }
 
+  if (topic !== undefined && (typeof topic !== 'string' || topic.trim().length > 80)) {
+    response.status(400).json({ error: 'Topic must be a string of 80 characters or fewer.' });
+    return;
+  }
+
+  const allowedDifficulties = ['easy', 'medium', 'hard'];
+  if (
+    difficulty !== undefined &&
+    difficulty !== '' &&
+    (typeof difficulty !== 'string' || !allowedDifficulties.includes(difficulty.toLowerCase()))
+  ) {
+    response.status(400).json({ error: 'Difficulty must be easy, medium, or hard.' });
+    return;
+  }
+
+  const selectedTopic = typeof topic === 'string' ? topic.trim() : '';
+  const selectedDifficulty = typeof difficulty === 'string' && difficulty ? difficulty.toLowerCase() : 'medium';
+
   let content: GameContent;
   if (word !== undefined || clue !== undefined) {
     if (typeof word !== 'string' || !word.trim() || typeof clue !== 'string' || !clue.trim()) {
@@ -75,7 +93,7 @@ app.post('/api/imposterwho/new', async (request, response) => {
         messages: [
           {
             role: 'user',
-            content: 'Create a word and a one word, related clue for an imposter party game. Return JSON with string fields "word" and "clue". The clue must not contain the word.',
+            content: `Create a word and a related single-word clue for an imposter party game. ${selectedTopic ? `Use the topic ${JSON.stringify(selectedTopic)}.` : 'Choose any topic.'} Set difficulty to ${selectedDifficulty}: easy uses familiar words and clear associations; medium uses less obvious words and associations; hard uses more obscure words and subtle but fair associations. The clue must not contain the word. Return JSON with string fields "word" and "clue".`,
           },
         ],
       });
@@ -124,6 +142,15 @@ app.get('/api/imposterwho/games', (_request, response) => {
       players: game.players.map(({ name }) => name),
     })),
   });
+});
+
+app.delete('/api/imposterwho/games/:gameId', (request, response) => {
+  if (!games.delete(request.params.gameId)) {
+    response.status(404).json({ error: 'Game not found.' });
+    return;
+  }
+
+  response.status(204).end();
 });
 
 app.post('/api/imposterwho/join', (request, response) => {
