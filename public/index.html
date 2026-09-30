@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f3f6f0">
+    <title>ImposterWho | Player Lobby</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #202a25;
+        --muted: #69736c;
+        --line: #d8ded7;
+        --paper: #f3f6f0;
+        --surface: #ffffff;
+        --acid: #d9f36a;
+        --orange: #f16d4e;
+        --green: #284b3c;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background-color: var(--paper);
+        background-image: linear-gradient(90deg, rgb(32 42 37 / 3%) 1px, transparent 1px), linear-gradient(rgb(32 42 37 / 3%) 1px, transparent 1px);
+        background-size: 34px 34px;
+        font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      }
+
+      .shell {
+        width: min(100% - 40px, 960px);
+        min-height: 100vh;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .brand-mark {
+        width: 25px;
+        height: 25px;
+        display: grid;
+        place-items: center;
+        background: var(--acid);
+        border: 1px solid var(--ink);
+        border-radius: 7px;
+        font-family: Georgia, serif;
+      }
+
+      .lobby-state {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .state-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--orange);
+        border-radius: 50%;
+      }
+
+      .state-dot.online { background: #5a9c61; }
+
+      main {
+        flex: 1;
+        width: min(100%, 700px);
+        margin: 0 auto;
+        padding: 74px 0 56px;
+      }
+
+      .intro { margin-bottom: 34px; }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        color: var(--green);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      h1, h2, p { margin-top: 0; }
+
+      h1 {
+        margin-bottom: 10px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 43px;
+        font-weight: 500;
+        line-height: 1.08;
+      }
+
+      .tagline {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .mode-switch {
+        width: fit-content;
+        display: flex;
+        gap: 4px;
+        margin-bottom: 16px;
+        padding: 4px;
+        background: #e7ece5;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+      }
+
+      .mode-tab {
+        min-height: 38px;
+        padding: 0 14px;
+        color: var(--muted);
+        background: transparent;
+        border: 0;
+        border-radius: 4px;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .mode-tab[aria-selected="true"] {
+        color: var(--ink);
+        background: var(--surface);
+        box-shadow: 0 1px 3px rgb(32 42 37 / 12%);
+      }
+
+      .join-section {
+        padding: 26px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-top: 4px solid var(--green);
+        border-radius: 6px;
+        box-shadow: 0 12px 32px rgb(32 42 37 / 6%);
+      }
+
+      .section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      h2 {
+        margin-bottom: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 24px;
+        font-weight: 500;
+      }
+
+      .refresh-button {
+        min-height: 38px;
+        padding: 0 12px;
+        color: var(--green);
+        background: transparent;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      form { display: grid; gap: 18px; }
+
+      label {
+        display: grid;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      select {
+        width: 100%;
+        min-height: 48px;
+        padding: 0 13px;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid #bdc8bf;
+        border-radius: 5px;
+        font: inherit;
+        font-size: 14px;
+      }
+
+      .text-input, textarea {
+        width: 100%;
+        padding: 12px 13px;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid #bdc8bf;
+        border-radius: 5px;
+        font: inherit;
+        font-size: 14px;
+      }
+
+      .text-input { min-height: 48px; }
+
+      textarea {
+        min-height: 112px;
+        resize: vertical;
+        line-height: 1.55;
+      }
+
+      .content-pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      select:focus-visible, .text-input:focus-visible, textarea:focus-visible, button:focus-visible {
+        outline: 3px solid rgb(90 156 97 / 35%);
+        outline-offset: 2px;
+      }
+
+      .join-button {
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 3px;
+        padding: 0 16px;
+        color: #fff;
+        background: var(--green);
+        border: 0;
+        border-radius: 5px;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .join-button span { color: var(--acid); font-size: 20px; }
+      .join-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      .notice {
+        min-height: 18px;
+        margin: -7px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .notice.error { color: #a53927; }
+
+      .profile {
+        margin-top: 22px;
+        padding: 20px;
+        background: #f6f9f2;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+      }
+
+      .profile[hidden] { display: none; }
+
+      .role-label {
+        display: inline-block;
+        margin-bottom: 14px;
+        padding: 6px 9px;
+        background: var(--acid);
+        border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .profile-secret {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 27px;
+        overflow-wrap: anywhere;
+      }
+
+      footer {
+        min-height: 54px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 560px) {
+        .shell { width: min(100% - 28px, 960px); }
+        header { height: 64px; }
+        main { padding-top: 48px; }
+        h1 { font-size: 36px; }
+        .join-section { padding: 20px 16px; }
+        .content-pair { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="brand"><span class="brand-mark" aria-hidden="true">?</span> ImposterWho</div>
+        <div class="lobby-state"><span id="state-dot" class="state-dot"></span><span id="state-text">Connecting</span></div>
+      </header>
+
+      <main>
+        <section class="intro">
+          <p class="eyebrow">Player lobby</p>
+          <h1>Take your seat.</h1>
+          <p class="tagline">One room. One imposter.</p>
+        </section>
+
+        <div class="mode-switch" role="tablist" aria-label="Game mode">
+          <button id="join-tab" class="mode-tab" type="button" role="tab" aria-selected="true" aria-controls="join-panel">Join</button>
+          <button id="new-tab" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="new-panel">New Game</button>
+        </div>
+
+        <section id="join-panel" class="join-section" role="tabpanel" aria-labelledby="join-tab">
+          <div class="section-heading">
+            <h2 id="join-title">Join a game</h2>
+            <button id="refresh-button" class="refresh-button" type="button">Refresh games</button>
+          </div>
+
+          <form id="join-form">
+            <label for="game-select">Game
+              <select id="game-select" required disabled>
+                <option value="">Loading games...</option>
+              </select>
+            </label>
+            <label for="player-select">Your player name
+              <select id="player-select" required disabled>
+                <option value="">Select a game first</option>
+              </select>
+            </label>
+            <button id="join-button" class="join-button" type="submit" disabled>
+              <span class="button-label">Reveal my role</span><span aria-hidden="true">&#8594;</span>
+            </button>
+            <p id="notice" class="notice" role="status" aria-live="polite"></p>
+          </form>
+
+          <section id="profile" class="profile" aria-live="polite" hidden>
+            <span id="role-label" class="role-label"></span>
+            <p id="profile-secret" class="profile-secret"></p>
+          </section>
+        </section>
+
+        <section id="new-panel" class="join-section" role="tabpanel" aria-labelledby="new-tab" hidden>
+          <div class="section-heading">
+            <h2>Create a game</h2>
+          </div>
+          <form id="new-form">
+            <label for="player-names">Player names
+              <textarea id="player-names" required placeholder="Alex&#10;Sam&#10;Riley"></textarea>
+            </label>
+            <div class="content-pair">
+              <label for="word-input">Word (optional)
+                <input id="word-input" class="text-input" type="text" autocomplete="off">
+              </label>
+              <label for="clue-input">Clue (optional)
+                <input id="clue-input" class="text-input" type="text" autocomplete="off">
+              </label>
+            </div>
+            <button id="create-button" class="join-button" type="submit">
+              <span>Create game</span><span aria-hidden="true">&#8594;</span>
+            </button>
+            <p id="create-notice" class="notice" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </main>
+
+      <footer><span>ImposterWho</span><span>Private role reveal</span></footer>
+    </div>
+
+    <script>
+      const gameSelect = document.querySelector('#game-select');
+      const playerSelect = document.querySelector('#player-select');
+      const joinButton = document.querySelector('#join-button');
+      const notice = document.querySelector('#notice');
+      const profile = document.querySelector('#profile');
+      const createNotice = document.querySelector('#create-notice');
+      const gamesById = new Map();
+
+      function setNotice(message, isError = false) {
+        notice.textContent = message;
+        notice.classList.toggle('error', isError);
+      }
+
+      function updatePlayers() {
+        playerSelect.replaceChildren(new Option('Select your name...', ''));
+        const game = gamesById.get(gameSelect.value);
+        if (!game) {
+          playerSelect.disabled = true;
+          joinButton.disabled = true;
+          return;
+        }
+
+        for (const playerName of game.players) {
+          playerSelect.add(new Option(playerName, playerName));
+        }
+        playerSelect.disabled = false;
+        joinButton.disabled = true;
+        profile.hidden = true;
+      }
+
+      function setMode(mode) {
+        const showJoin = mode === 'join';
+        document.querySelector('#join-tab').setAttribute('aria-selected', String(showJoin));
+        document.querySelector('#new-tab').setAttribute('aria-selected', String(!showJoin));
+        document.querySelector('#join-panel').hidden = !showJoin;
+        document.querySelector('#new-panel').hidden = showJoin;
+      }
+
+      function setCreateNotice(message, isError = false) {
+        createNotice.textContent = message;
+        createNotice.classList.toggle('error', isError);
+      }
+
+      async function loadGames(selectedGameId = gameSelect.value) {
+        const stateText = document.querySelector('#state-text');
+        const stateDot = document.querySelector('#state-dot');
+        try {
+          const response = await fetch('/api/imposterwho/games');
+          if (!response.ok) throw new Error('Could not load games.');
+          const data = await response.json();
+          gamesById.clear();
+          gameSelect.replaceChildren(new Option(data.games.length ? 'Select a game...' : 'No games available', ''));
+          for (const game of data.games) {
+            gamesById.set(game.gameId, game);
+            const label = `Game ${game.gameId.slice(0, 8)} - ${game.players.length} players`;
+            gameSelect.add(new Option(label, game.gameId));
+          }
+          gameSelect.disabled = data.games.length === 0;
+          if (gamesById.has(selectedGameId)) gameSelect.value = selectedGameId;
+          updatePlayers();
+          stateText.textContent = 'Connected';
+          stateDot.classList.add('online');
+          setNotice(data.games.length ? '' : 'No active games.');
+        } catch (error) {
+          stateText.textContent = 'Offline';
+          stateDot.classList.remove('online');
+          gameSelect.replaceChildren(new Option('Could not load games', ''));
+          gameSelect.disabled = true;
+          updatePlayers();
+          setNotice(error.message, true);
+        }
+      }
+
+      gameSelect.addEventListener('change', updatePlayers);
+      playerSelect.addEventListener('change', () => {
+        joinButton.disabled = !playerSelect.value;
+        profile.hidden = true;
+      });
+      document.querySelector('#refresh-button').addEventListener('click', () => loadGames());
+      document.querySelector('#join-tab').addEventListener('click', () => setMode('join'));
+      document.querySelector('#new-tab').addEventListener('click', () => setMode('new'));
+      document.querySelector('#join-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        joinButton.disabled = true;
+        setNotice('Joining...');
+        profile.hidden = true;
+        try {
+          const response = await fetch('/api/imposterwho/join', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ gameId: gameSelect.value, playerName: playerSelect.value }),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Could not join the game.');
+          document.querySelector('#role-label').textContent = data.role;
+          document.querySelector('#profile-secret').textContent = data.role === 'imposter' ? data.clue : data.word;
+          profile.hidden = false;
+          setNotice('');
+        } catch (error) {
+          setNotice(error.message, true);
+        } finally {
+          joinButton.disabled = !playerSelect.value;
+        }
+      });
+      document.querySelector('#new-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const players = document.querySelector('#player-names').value.split(/\r?\n/).map(name => name.trim()).filter(Boolean);
+        const word = document.querySelector('#word-input').value.trim();
+        const clue = document.querySelector('#clue-input').value.trim();
+        const normalizedNames = new Set(players.map(name => name.toLowerCase()));
+
+        if (players.length < 3) {
+          setCreateNotice('Enter at least three player names.', true);
+          return;
+        }
+        if (normalizedNames.size !== players.length) {
+          setCreateNotice('Player names must be unique.', true);
+          return;
+        }
+        if (Boolean(word) !== Boolean(clue)) {
+          setCreateNotice('Enter both a word and clue, or leave both blank.', true);
+          return;
+        }
+
+        const createButton = document.querySelector('#create-button');
+        createButton.disabled = true;
+        setCreateNotice('Creating game...');
+        try {
+          const response = await fetch('/api/imposterwho/new', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ players, ...(word ? { word, clue } : {}) }),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Could not create the game.');
+          await loadGames(data.gameId);
+          setMode('join');
+          setNotice('Game created. Choose your name to join.');
+          setCreateNotice('');
+        } catch (error) {
+          setCreateNotice(error.message, true);
+        } finally {
+          createButton.disabled = false;
+        }
+      });
+
+      loadGames();
+    </script>
+  </body>
+</html>
